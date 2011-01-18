@@ -182,6 +182,8 @@ namespace MassTransit.Transports.Msmq
 	        _errorTransport.Send(outbound =>
 	        	{
 	        		outbound.BodyStream = message.BodyStream;
+					outbound.Label = message.Label;
+					outbound.Recoverable = true;
 
 	        		SetMessageExpiration(outbound);
 	        	});
