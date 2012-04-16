@@ -72,7 +72,7 @@ namespace MassTransit.Distributor
 
 		public void Start(IServiceBus bus)
 		{
-			_unsubscribeAction = bus.Subscribe<WorkerAvailable<T>>(Consume);
+			_unsubscribeAction = bus.ControlBus.Subscribe<WorkerAvailable<T>>(Consume);
 
 			// don't plan to unsubscribe this since it's an important thing
 			bus.Subscribe(this);

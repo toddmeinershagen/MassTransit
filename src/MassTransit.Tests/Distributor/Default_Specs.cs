@@ -46,17 +46,17 @@ namespace MassTransit.Tests.Distributor
 		public void Can_collect_iworkeravaiable_messages()
 		{
 			int workerAvaiableCountRecieved = 0;
-			var messageRecieved = new ManualResetEvent(false);
+		    var future = new MassTransit.FutureMessage<IWorkerAvailable>();
 
 			UnsubscribeAction unsubscribe = LocalBus.Subscribe<IWorkerAvailable>(message =>
 				{
 					Interlocked.Increment(ref workerAvaiableCountRecieved);
-					messageRecieved.Set();
+				    future.Consume(message);
 				});
 
 			Instances.ToList().ForEach(x => { x.Value.ControlBus.Endpoint.Send(new PingWorker()); });
 
-			messageRecieved.WaitOne(3.Seconds());
+		    future.WaitUntilAvailable(8.Seconds());
 
 			unsubscribe();
 
@@ -86,17 +86,17 @@ namespace MassTransit.Tests.Distributor
 		public void Ensure_workers_will_respond_to_ping_request()
 		{
 			int workerAvaiableCountRecieved = 0;
-			var messageRecieved = new ManualResetEvent(false);
-
+            var future = new MassTransit.FutureMessage<WorkerAvailable<FirstCommand>>();
+            
 			UnsubscribeAction unsubscribe = LocalBus.Subscribe<WorkerAvailable<FirstCommand>>(message =>
 				{
 					Interlocked.Increment(ref workerAvaiableCountRecieved);
-					messageRecieved.Set();
+				    future.Consume(message);
 				});
 
 			Instances.ToList().ForEach(x => { x.Value.ControlBus.Endpoint.Send(new PingWorker()); });
 
-			messageRecieved.WaitOne(3.Seconds());
+		    future.WaitUntilAvailable(8.Seconds());
 
 			unsubscribe();
 
