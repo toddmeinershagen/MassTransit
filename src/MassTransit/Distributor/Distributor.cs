@@ -30,7 +30,7 @@ namespace MassTransit.Distributor
 		private readonly ReaderWriterLockedDictionary<Uri, WorkerDetails> _workers = new ReaderWriterLockedDictionary<Uri, WorkerDetails>();
 		private Scheduler _threadPoolScheduler;
 		private UnsubscribeAction _unsubscribeAction = () => false;
-        private readonly int _pingTimeout = (int)1.Minutes().TotalMilliseconds;
+        private readonly int _pingTimeout = (int)5.Seconds().TotalMilliseconds;
 
 		public Distributor(IEndpointFactory endpointFactory, IWorkerSelectionStrategy<T> workerSelectionStrategy)
 		{

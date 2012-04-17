@@ -13,7 +13,6 @@
 namespace MassTransit.Distributor
 {
 	using System;
-	using System.Threading;
 	using Magnum;
 
 	public class WorkerDetails
@@ -29,9 +28,12 @@ namespace MassTransit.Distributor
 
 		public void Add()
 		{
-			Interlocked.Increment(ref InProgress);
+            lock (this)
+            {
+                InProgress++;
 
-			LastUpdate = SystemUtil.UtcNow;
+                LastUpdate = SystemUtil.UtcNow;
+            }
 		}
 
 		public void UpdateInProgress(int inProgress, int inProgressLimit, int pending, int pendingLimit, DateTime updated)
@@ -46,6 +48,8 @@ namespace MassTransit.Distributor
 
 				Pending = pending;
 				PendingLimit = pendingLimit;
+
+			    LastUpdate = updated;
 			}
 		}
 	}
