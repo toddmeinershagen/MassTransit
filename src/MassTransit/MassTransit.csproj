@@ -255,6 +255,7 @@
     <Compile Include="Distributor\SagaWorkerSubscriptionExtensions.cs" />
     <Compile Include="Distributor\SubscriptionConnectors\DistributorSubscriptionConnector.cs" />
     <Compile Include="Distributor\SubscriptionConnectors\WorkerSubscriptionConnector.cs" />
+    <Compile Include="Exceptions\PublishException.cs" />
     <Compile Include="Exceptions\RequestException.cs" />
     <Compile Include="Exceptions\RequestTimeoutException.cs" />
     <Compile Include="Exceptions\SendException.cs" />

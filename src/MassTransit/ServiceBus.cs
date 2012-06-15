@@ -154,6 +154,8 @@ namespace MassTransit
 
             contextCallback(context);
 
+            IList<Exception> exceptions = new List<Exception>();
+
             int publishedCount = 0;
             foreach (var consumer in OutboundPipeline.Enumerate(context))
             {
@@ -166,6 +168,8 @@ namespace MassTransit
                 {
                     _log.Error(string.Format("'{0}' threw an exception publishing message '{1}'",
                         consumer.GetType().FullName, message.GetType().FullName), ex);
+
+                    exceptions.Add(ex);
                 }
             }
 
@@ -182,6 +186,9 @@ namespace MassTransit
                     ConsumerCount = publishedCount,
                     Duration = context.Duration,
                 });
+
+            if (exceptions.Count > 0)
+                throw new PublishException(typeof(T), exceptions);
         }
 
         public IOutboundMessagePipeline OutboundPipeline { get; private set; }
