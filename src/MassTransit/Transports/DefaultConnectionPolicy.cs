@@ -57,8 +57,15 @@ namespace MassTransit.Transports
                     _log.Debug("Retrying callback after reconnect.");
                 }
 
-                // let this one fail no need to try/catch/lock etc
-                callback();
+                try
+                {
+                    _connectionlLock.EnterReadLock();
+                    callback();
+                }
+                finally
+                {
+                    _connectionlLock.ExitReadLock();
+                }
             }
         }
 
