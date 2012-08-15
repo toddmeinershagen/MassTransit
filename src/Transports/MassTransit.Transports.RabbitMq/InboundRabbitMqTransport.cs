@@ -90,6 +90,10 @@ namespace MassTransit.Transports.RabbitMq
                             _consumer.MessageCompleted(result.DeliveryTag);
                         }
                     }
+                    catch (AlreadyClosedException ex)
+                    {
+                        throw new InvalidConnectionException(_address.Uri, "Connection was already closed", ex);
+                    }
                     catch (EndOfStreamException ex)
                     {
                         throw new InvalidConnectionException(_address.Uri, "Connection was closed", ex);

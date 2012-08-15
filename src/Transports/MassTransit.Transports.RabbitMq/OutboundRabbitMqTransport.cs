@@ -40,44 +40,50 @@ namespace MassTransit.Transports.RabbitMq
 			get { return _address; }
 		}
 
-		public void Send(ISendContext context)
-		{
-			AddProducerBinding();
+        public void Send(ISendContext context)
+        {
+            AddProducerBinding();
 
-			_connectionHandler.Use(connection =>
-				{
-					try
-					{
-						IBasicProperties properties = _producer.Channel.CreateBasicProperties();
+            _connectionHandler.Use(connection =>
+                {
+                    try
+                    {
+                        IBasicProperties properties = _producer.CreateProperties();
 
-						properties.SetPersistent(true);
-						if (context.ExpirationTime.HasValue)
-						{
-							DateTime value = context.ExpirationTime.Value;
-							properties.Expiration =
-								(value.Kind == DateTimeKind.Utc ? value - SystemUtil.UtcNow : value - SystemUtil.Now).ToString();
-						}
+                        properties.SetPersistent(true);
+                        if (context.ExpirationTime.HasValue)
+                        {
+                            DateTime value = context.ExpirationTime.Value;
+                            properties.Expiration =
+                                (value.Kind == DateTimeKind.Utc
+                                     ? value - SystemUtil.UtcNow
+                                     : value - SystemUtil.Now).ToString();
+                        }
 
-						using (var body = new MemoryStream())
-						{
-							context.SerializeTo(body);
-							properties.Headers = new Hashtable {{"Content-Type", context.ContentType}};
+                        using (var body = new MemoryStream())
+                        {
+                            context.SerializeTo(body);
+                            properties.Headers = new Hashtable {{"Content-Type", context.ContentType}};
 
-							_producer.Channel.BasicPublish(_address.Name, "", properties, body.ToArray());
-						}
-					}
-					catch (EndOfStreamException ex)
-					{
-						throw new InvalidConnectionException(_address.Uri, "Connection was closed", ex);
-					}
-					catch (OperationInterruptedException ex)
-					{
-						throw new InvalidConnectionException(_address.Uri, "Operation was interrupted", ex);
-					}
-				});
-		}
+                            _producer.Publish(_address.Name, properties, body.ToArray());
+                        }
+                    }
+                    catch (AlreadyClosedException ex)
+                    {
+                        throw new InvalidConnectionException(_address.Uri, "Connection was already closed", ex);
+                    }
+                    catch (EndOfStreamException ex)
+                    {
+                        throw new InvalidConnectionException(_address.Uri, "Connection was closed", ex);
+                    }
+                    catch (OperationInterruptedException ex)
+                    {
+                        throw new InvalidConnectionException(_address.Uri, "Operation was interrupted", ex);
+                    }
+                });
+        }
 
-		public void Dispose()
+	    public void Dispose()
 		{
 			RemoveProducer();
 		}

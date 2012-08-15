@@ -12,51 +12,62 @@
 // specific language governing permissions and limitations under the License.
 namespace MassTransit.Transports.RabbitMq
 {
-	using Management;
-	using RabbitMQ.Client;
+    using Management;
+    using RabbitMQ.Client;
 
-	public class RabbitMqProducer :
-		ConnectionBinding<RabbitMqConnection>
-	{
-		readonly IRabbitMqEndpointAddress _address;
-		IModel _channel;
-		bool _bindToQueue;
+    public class RabbitMqProducer :
+        ConnectionBinding<RabbitMqConnection>
+    {
+        readonly IRabbitMqEndpointAddress _address;
+        IModel _channel;
+        bool _bindToQueue;
 
-		public RabbitMqProducer(IRabbitMqEndpointAddress address, bool bindToQueue)
-		{
-			_address = address;
-			_bindToQueue = bindToQueue;
-		}
+        public RabbitMqProducer(IRabbitMqEndpointAddress address, bool bindToQueue)
+        {
+            _address = address;
+            _bindToQueue = bindToQueue;
+        }
 
-		public IModel Channel
-		{
-			get { return _channel; }
-		}
+        public IBasicProperties CreateProperties()
+        {
+            if (_channel == null)
+                throw new InvalidConnectionException(_address.Uri, "Channel should not be null");
 
-		public void Bind(RabbitMqConnection connection)
-		{
-			_channel = connection.Connection.CreateModel();
+            return _channel.CreateBasicProperties();
+        }
 
-			_channel.ExchangeDeclare(_address.Name, ExchangeType.Fanout, true);
+        public void Publish(string exchangeName, IBasicProperties properties, byte[] body)
+        {
+            if (_channel == null)
+                throw new InvalidConnectionException(_address.Uri, "Channel should not be null");
 
-			if(_bindToQueue)
-			{
-				using (var management = new RabbitMqEndpointManagement(_address, connection.Connection))
-				{
-					management.BindQueue(_address.Name, _address.Name, ExchangeType.Fanout, "");
-				}
-			}
-		}
+            _channel.BasicPublish(exchangeName, "", properties, body);
+        }
 
-		public void Unbind(RabbitMqConnection connection)
-		{
-			if (_channel != null)
-			{
-				if (_channel.IsOpen)
-					_channel.Close(200, "producer unbind");
-				_channel.Dispose();
-				_channel = null;
-			}
-		}
-	}
+        public void Bind(RabbitMqConnection connection)
+        {
+            _channel = connection.Connection.CreateModel();
+
+            _channel.ExchangeDeclare(_address.Name, ExchangeType.Fanout, true);
+
+            if(_bindToQueue)
+            {
+                using (var management = new RabbitMqEndpointManagement(_address, connection.Connection))
+                {
+                    management.BindQueue(_address.Name, _address.Name, ExchangeType.Fanout, "");
+                }
+            }
+        }
+
+        public void Unbind(RabbitMqConnection connection)
+        {
+            if (_channel != null)
+            {
+                if (_channel.IsOpen)
+                    _channel.Close(200, "producer unbind");
+                _channel.Dispose();
+                _channel = null;
+            }
+        }
+    }
 }
