@@ -12,150 +12,156 @@
 // specific language governing permissions and limitations under the License.
 namespace MassTransit.Transports
 {
-	using System;
-	using System.Collections.Generic;
-	using log4net;
+    using System;
+    using System.Collections.Generic;
+    using log4net;
 
-	public class ConnectionHandlerImpl<T> :
-		ConnectionHandler<T>,
-		ConnectionHandler
-		where T : Connection
-	{
-		readonly HashSet<ConnectionBinding<T>> _bindings;
-		readonly T _connection;
-		readonly object _lock = new object();
-		readonly ILog _log = LogManager.GetLogger(typeof (ConnectionHandlerImpl<T>));
-		readonly ConnectionPolicyChainImpl _policyChain;
-		bool _bound;
-		bool _connected;
-		bool _disposed;
+    public class ConnectionHandlerImpl<T> :
+        ConnectionHandler<T>,
+        ConnectionHandler
+        where T : Connection
+    {
+        readonly HashSet<ConnectionBinding<T>> _bindings;
+        readonly T _connection;
+        readonly object _lock = new object();
+        readonly ILog _log = LogManager.GetLogger(typeof (ConnectionHandlerImpl<T>));
+        readonly ConnectionPolicyChainImpl _policyChain;
+        bool _bound;
+        bool _connected;
+        bool _disposed;
 
-		public ConnectionHandlerImpl(T connection)
-		{
-			_bindings = new HashSet<ConnectionBinding<T>>();
+        public ConnectionHandlerImpl(T connection)
+        {
+            _bindings = new HashSet<ConnectionBinding<T>>();
 
-			_connection = connection;
-			_policyChain = new ConnectionPolicyChainImpl(this);
+            _connection = connection;
+            _policyChain = new ConnectionPolicyChainImpl(this);
 
-			_policyChain.Push(new ConnectOnFirstUsePolicy(this, _policyChain));
-		}
+            _policyChain.Push(new ConnectOnFirstUsePolicy(this, _policyChain));
+        }
 
-		public void Connect()
-		{
-			lock (_lock)
-			{
-				if (!_connected)
-					_connection.Connect();
+        public void Connect()
+        {
+            lock (_lock)
+            {
+                if (!_connected)
+                    _connection.Connect();
 
-				_connected = true;
+                _connected = true;
 
-				BindBindings();
-			}
-		}
+                BindBindings();
+            }
+        }
 
-		public void Disconnect()
-		{
-			lock (_lock)
-			{
-				_connected = false;
+        public void Disconnect()
+        {
+            lock (_lock)
+            {
+                _connected = false;
+                try
+                {
+                    UnbindBindings();
 
-				UnbindBindings();
-
-				_connection.Disconnect();
-			}
-		}
+                    _connection.Disconnect();
+                }
+                catch (Exception ex)
+                {
+                    _log.Warn("Disconnect failed, but ignoring", ex);
+                }
+            }
+        }
 
         public void ForceReconnect(TimeSpan reconnectDelay)
         {
             _policyChain.Push(new ReconnectPolicy(this, _policyChain, reconnectDelay));
         }
 
-		public void Dispose()
-		{
-			Dispose(true);
-			GC.SuppressFinalize(this);
-		}
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
 
-		public void Use(Action<T> callback)
-		{
-			_policyChain.Execute(() => callback(_connection));
-		}
-
-
-		public void AddBinding(ConnectionBinding<T> binding)
-		{
-			lock (_lock)
-			{
-				_bindings.Add(binding);
-				if (_bound)
-				{
-					binding.Bind(_connection);
-				}
-			}
-		}
-
-		public void RemoveBinding(ConnectionBinding<T> binding)
-		{
-			lock (_lock)
-			{
-				if (_bound)
-				{
-					binding.Unbind(_connection);
-				}
-				_bindings.Remove(binding);
-			}
-		}
-
-		void BindBindings()
-		{
-			if (_bound)
-				return;
-
-			foreach (var binding in _bindings)
-			{
-				binding.Bind(_connection);
-			}
-			_bound = true;
-		}
-
-		void UnbindBindings()
-		{
-			foreach (var binding in _bindings)
-			{
-				try
-				{
-					binding.Unbind(_connection);
-				}
-				catch (Exception ex)
-				{
-					_log.Error("An exception occurred while a binding was being unbound", ex);
-				}
-			}
-
-			_bound = false;
-		}
+        public void Use(Action<T> callback)
+        {
+            _policyChain.Execute(() => callback(_connection));
+        }
 
 
-		void Dispose(bool disposing)
-		{
-			if (_disposed) return;
-			if (disposing)
-			{
-				UnbindBindings();
+        public void AddBinding(ConnectionBinding<T> binding)
+        {
+            lock (_lock)
+            {
+                _bindings.Add(binding);
+                if (_bound)
+                {
+                    binding.Bind(_connection);
+                }
+            }
+        }
 
-				Disconnect();
+        public void RemoveBinding(ConnectionBinding<T> binding)
+        {
+            lock (_lock)
+            {
+                if (_bound)
+                {
+                    binding.Unbind(_connection);
+                }
+                _bindings.Remove(binding);
+            }
+        }
 
-				_connection.Dispose();
+        void BindBindings()
+        {
+            if (_bound)
+                return;
 
-				_policyChain.Set(new DisposedConnectionPolicy());
-			}
+            foreach (var binding in _bindings)
+            {
+                binding.Bind(_connection);
+            }
+            _bound = true;
+        }
 
-			_disposed = true;
-		}
+        void UnbindBindings()
+        {
+            foreach (var binding in _bindings)
+            {
+                try
+                {
+                    binding.Unbind(_connection);
+                }
+                catch (Exception ex)
+                {
+                    _log.Error("An exception occurred while a binding was being unbound", ex);
+                }
+            }
 
-		~ConnectionHandlerImpl()
-		{
-			Dispose(false);
-		}
-	}
+            _bound = false;
+        }
+
+
+        void Dispose(bool disposing)
+        {
+            if (_disposed) return;
+            if (disposing)
+            {
+                UnbindBindings();
+
+                Disconnect();
+
+                _connection.Dispose();
+
+                _policyChain.Set(new DisposedConnectionPolicy());
+            }
+
+            _disposed = true;
+        }
+
+        ~ConnectionHandlerImpl()
+        {
+            Dispose(false);
+        }
+    }
 }

@@ -12,7 +12,9 @@
 // specific language governing permissions and limitations under the License.
 namespace MassTransit.Transports.RabbitMq.Tests
 {
-	using System.IO;
+    using System;
+    using System.Diagnostics;
+    using System.IO;
 	using System.Reflection;
 	using log4net.Config;
 	using NUnit.Framework;
@@ -23,11 +25,11 @@ namespace MassTransit.Transports.RabbitMq.Tests
 		[SetUp]
 		public void Before_any()
 		{
-			string path = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-
-			string file = Path.Combine(path, "test.log4net.xml");
+			string file = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "test.log4net.xml");
 
 			XmlConfigurator.Configure(new FileInfo(file));
+
+            Console.WriteLine("Loading Log4net: " + file);
 		}
 	}
 }

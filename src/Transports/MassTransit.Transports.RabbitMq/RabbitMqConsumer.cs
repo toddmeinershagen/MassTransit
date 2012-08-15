@@ -12,73 +12,90 @@
 // specific language governing permissions and limitations under the License.
 namespace MassTransit.Transports.RabbitMq
 {
-	using System;
-	using Management;
-	using RabbitMQ.Client;
-	using log4net;
+    using System;
+    using Management;
+    using RabbitMQ.Client;
+    using log4net;
 
 
-	public class RabbitMqConsumer :
-		ConnectionBinding<RabbitMqConnection>
-	{
-		static readonly ILog _log = LogManager.GetLogger(typeof (RabbitMqConsumer));
-		readonly IRabbitMqEndpointAddress _address;
-		IModel _channel;
-		bool _purgeOnBind;
+    public class RabbitMqConsumer :
+        ConnectionBinding<RabbitMqConnection>
+    {
+        static readonly ILog _log = LogManager.GetLogger(typeof (RabbitMqConsumer));
+        readonly IRabbitMqEndpointAddress _address;
+        IModel _channel;
+        bool _purgeOnBind;
 
-		public RabbitMqConsumer(IRabbitMqEndpointAddress address, bool purgeOnBind)
-		{
-			_address = address;
-			_purgeOnBind = purgeOnBind;
-		}
+        public RabbitMqConsumer(IRabbitMqEndpointAddress address, bool purgeOnBind)
+        {
+            _address = address;
+            _purgeOnBind = purgeOnBind;
+        }
 
-		public BasicGetResult Get()
-		{
-			return _channel.BasicGet(_address.Name, false);
-		}
+        public BasicGetResult Get()
+        {
+            if (_channel == null)
+                throw new InvalidConnectionException(_address.Uri, "Channel should not be null");
 
-		public void MessageCompleted(ulong deliveryTag)
-		{
-			_channel.BasicAck(deliveryTag, false);
-		}
+            return _channel.BasicGet(_address.Name, false);
+        }
 
-		public void MessageFailed(ulong deliveryTag, bool requeue)
-		{
-			_channel.BasicNack(deliveryTag, false, requeue);
-		}
+        public void MessageCompleted(ulong deliveryTag)
+        {
+            if (_channel == null)
+                throw new InvalidConnectionException(_address.Uri, "Channel should not be null");
 
-		public void Bind(RabbitMqConnection connection)
-		{
-			using (var management = new RabbitMqEndpointManagement(_address, connection.Connection))
-			{
-				management.BindQueue(_address.Name, _address.Name, ExchangeType.Fanout, "");
+            _channel.BasicAck(deliveryTag, false);
+        }
 
-				if(_purgeOnBind)
-				{
-					management.Purge(_address.Name);
-					_purgeOnBind = false;
-				}
-			}
+        public void MessageFailed(ulong deliveryTag, bool requeue)
+        {
+            if (_channel == null)
+                return;
 
-			_channel = connection.Connection.CreateModel();
-			_channel.BasicQos(0, 1, false);
-		}
+            _channel.BasicNack(deliveryTag, false, requeue);
+        }
 
-		public void Unbind(RabbitMqConnection connection)
-		{
-			try
-			{
-				_channel.Close(200, "unbind consumer");
-			}
-			catch (Exception ex)
-			{
-				_log.Error("Failed to close channel: " + _address, ex);
-			}
-			finally
-			{
-				_channel.Dispose();
-				_channel = null;
-			}
-		}
-	}
+        public void Bind(RabbitMqConnection connection)
+        {
+            using (var management = new RabbitMqEndpointManagement(_address, connection.Connection))
+            {
+                management.BindQueue(_address.Name, _address.Name, ExchangeType.Fanout, "");
+
+                if(_purgeOnBind)
+                {
+                    management.Purge(_address.Name);
+                    _purgeOnBind = false;
+                }
+            }
+
+            _channel = connection.Connection.CreateModel();
+            _channel.BasicQos(0, 1, false);
+        }
+
+        public void Unbind(RabbitMqConnection connection)
+        {
+            try
+            {
+                _channel.Close(200, "unbind consumer");
+            }
+            catch (Exception ex)
+            {
+                _log.Error("Failed to close channel: " + _address, ex);
+            }
+
+            try
+            {
+                _channel.Dispose();
+            }
+            catch (Exception ex)
+            {
+                _log.Error("Failed to dispose channel: " + _address, ex);
+            }
+            finally
+            {
+                _channel = null;
+            }
+        }
+    }
 }
