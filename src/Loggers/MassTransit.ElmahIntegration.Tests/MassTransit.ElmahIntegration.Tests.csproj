@@ -46,6 +46,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Logging\ErrorExtensions.cs" />
+    <Compile Include="Logging\ErrorLogExtensions.cs" />
     <Compile Include="Logging\ElmahLogTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
