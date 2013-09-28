@@ -85,6 +85,7 @@ task :copy_signed => [:build] do
     outl = File.join(props[:output], "Logging")
 	copyOutputFiles File.join(props[:src], "Loggers/MassTransit.Log4NetIntegration/bin/#{BUILD_CONFIG}"), "MassTransit.Log4NetIntegration.{dll,pdb,xml}", outl
 	copyOutputFiles File.join(props[:src], "Loggers/MassTransit.NLogIntegration/bin/#{BUILD_CONFIG}"), "MassTransit.NLogIntegration.{dll,pdb,xml}", outl
+	copyOutputFiles File.join(props[:src], "Loggers/MassTransit.ElmahIntegration/bin/#{BUILD_CONFIG}"), "MassTransit.ElmahIntegration.{dll,pdb,xml}", outl
 
 	copyOutputFiles File.join(props[:src], "MassTransit.Reactive/bin/#{BUILD_CONFIG}"), "MassTransit.*.{dll,pdb,xml}", File.join(props[:output], "Reactive")
     outc = File.join(props[:output], "Containers")
@@ -361,7 +362,7 @@ def add_files_net40 stage, what_dlls, nuspec
   end
 end
 
-task :all_nuspecs => [:mt_nuspec, :mtl4n_nuspec, :mtnlog_nuspec, :mtsm_nuspec, :mtaf_nuspec, :mtni_nuspec, :mtun_nuspec, :mtcw_nuspec, :mtnhib_nuspec, :mtrmq_nuspec, :mttf_nuspec, :mtrx_nuspec]
+task :all_nuspecs => [:mt_nuspec, :mtl4n_nuspec, :mtnlog_nuspec, :mtelmah_nuspec, :mtsm_nuspec, :mtaf_nuspec, :mtni_nuspec, :mtun_nuspec, :mtcw_nuspec, :mtnhib_nuspec, :mtrmq_nuspec, :mttf_nuspec, :mtrx_nuspec]
 
   directory 'nuspecs'
 
@@ -414,6 +415,23 @@ task :all_nuspecs => [:mt_nuspec, :mtl4n_nuspec, :mtnlog_nuspec, :mtsm_nuspec, :
     nuspec.output_file = 'nuspecs/MassTransit.NLog.nuspec'
 
     add_files props[:stage], File.join('Logging', 'MassTransit.NLogIntegration.{dll,pdb,xml}'), nuspec
+  end
+
+  nuspec :mtelmah_nuspec => ['nuspecs'] do |nuspec|
+    nuspec.id = 'MassTransit.Elmah'
+    nuspec.version = NUGET_VERSION
+    nuspec.authors = 'Todd Meinershagen'
+    nuspec.owners = 'Chris Patterson, Dru Sellers, Travis Smith'
+    nuspec.description = 'This integration library adds support for Elmah to MassTransit, a distributed application framework for .NET, including support for MSMQ and RabbitMQ.'
+    nuspec.projectUrl = 'http://masstransit-project.com'
+    nuspec.language = "en-US"
+    nuspec.licenseUrl = "http://www.apache.org/licenses/LICENSE-2.0"
+    nuspec.requireLicenseAcceptance = "false"
+    nuspec.dependency "MassTransit", NUGET_VERSION
+    nuspec.dependency "Elmah", "1.2.2"
+    nuspec.output_file = 'nuspecs/MassTransit.Elmah.nuspec'
+
+    add_files props[:stage], File.join('Logging', 'MassTransit.ElmahIntegration.{dll,pdb,xml}'), nuspec
   end
 
   nuspec :mtcw_nuspec => ['nuspecs'] do |nuspec|
@@ -578,6 +596,7 @@ task :nuget => [:versioning, 'build_artifacts', :all_nuspecs] do
 	sh "src/.nuget/nuget.exe pack -BasePath build_output nuspecs/MassTransit.nuspec -o build_artifacts"
 	sh "src/.nuget/nuget.exe pack -BasePath build_output nuspecs/MassTransit.Log4Net.nuspec -o build_artifacts"
 	sh "src/.nuget/nuget.exe pack -BasePath build_output nuspecs/MassTransit.NLog.nuspec -o build_artifacts"
+	sh "src/.nuget/nuget.exe pack -BasePath build_output nuspecs/MassTransit.Elmah.nuspec -o build_artifacts"
 	sh "src/.nuget/nuget.exe pack -BasePath build_output nuspecs/MassTransit.StructureMap.nuspec -o build_artifacts"
 	sh "src/.nuget/nuget.exe pack -BasePath build_output nuspecs/MassTransit.Autofac.nuspec -o build_artifacts"
 	sh "src/.nuget/nuget.exe pack -BasePath build_output nuspecs/MassTransit.Ninject.nuspec -o build_artifacts"
