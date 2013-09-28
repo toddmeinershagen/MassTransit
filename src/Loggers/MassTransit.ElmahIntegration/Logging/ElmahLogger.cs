@@ -10,5 +10,10 @@
         {
             return new ElmahLog(ErrorLog.GetDefault(null));
         }
+
+        public static void Use()
+        {
+            Logger.UseLogger(new ElmahLogger());
+        }
     }
 }
