@@ -61,19 +61,19 @@ namespace MassTransit.NLogIntegration.Logging
             get { return _log.IsFatalEnabled; }
         }
 
-        public void Log(MassTransit.Logging.LogLevel level, object obj)
+        public void Log(MassTransit.Logging.LogLevel minimumLevel, object obj)
         {
-            _log.Log(GetNLogLevel(level), obj);
+            _log.Log(GetNLogLevel(minimumLevel), obj);
         }
 
-        public void Log(MassTransit.Logging.LogLevel level, object obj, Exception exception)
+        public void Log(MassTransit.Logging.LogLevel minimumLevel, object obj, Exception exception)
         {
-            _log.LogException(GetNLogLevel(level), obj == null ? "" : obj.ToString(), exception);
+            _log.LogException(GetNLogLevel(minimumLevel), obj == null ? "" : obj.ToString(), exception);
         }
 
-        public void Log(MassTransit.Logging.LogLevel level, LogOutputProvider messageProvider)
+        public void Log(MassTransit.Logging.LogLevel minimumLevel, LogOutputProvider messageProvider)
         {
-            _log.Log(GetNLogLevel(level), ToGenerator(messageProvider));
+            _log.Log(GetNLogLevel(minimumLevel), ToGenerator(messageProvider));
         }
 
         public void LogFormat(MassTransit.Logging.LogLevel level, IFormatProvider formatProvider, string format,

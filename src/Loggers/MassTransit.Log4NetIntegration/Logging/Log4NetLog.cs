@@ -191,45 +191,45 @@ namespace MassTransit.Log4NetIntegration.Logging
             get { return _log.IsFatalEnabled; }
         }
 
-        public void Log(LogLevel level, object obj)
+        public void Log(LogLevel minimumLevel, object obj)
         {
-            if (level == LogLevel.Fatal)
+            if (minimumLevel == LogLevel.Fatal)
                 Fatal(obj);
-            else if (level == LogLevel.Error)
+            else if (minimumLevel == LogLevel.Error)
                 Error(obj);
-            else if (level == LogLevel.Warn)
+            else if (minimumLevel == LogLevel.Warn)
                 Warn(obj);
-            else if (level == LogLevel.Info)
+            else if (minimumLevel == LogLevel.Info)
                 Info(obj);
-            else if (level >= LogLevel.Debug)
+            else if (minimumLevel >= LogLevel.Debug)
                 Debug(obj);
         }
 
-        public void Log(LogLevel level, object obj, Exception exception)
+        public void Log(LogLevel minimumLevel, object obj, Exception exception)
         {
-            if (level == LogLevel.Fatal)
+            if (minimumLevel == LogLevel.Fatal)
                 Fatal(obj, exception);
-            else if (level == LogLevel.Error)
+            else if (minimumLevel == LogLevel.Error)
                 Error(obj, exception);
-            else if (level == LogLevel.Warn)
+            else if (minimumLevel == LogLevel.Warn)
                 Warn(obj, exception);
-            else if (level == LogLevel.Info)
+            else if (minimumLevel == LogLevel.Info)
                 Info(obj, exception);
-            else if (level >= LogLevel.Debug)
+            else if (minimumLevel >= LogLevel.Debug)
                 Debug(obj, exception);
         }
 
-        public void Log(LogLevel level, LogOutputProvider messageProvider)
+        public void Log(LogLevel minimumLevel, LogOutputProvider messageProvider)
         {
-            if (level == LogLevel.Fatal)
+            if (minimumLevel == LogLevel.Fatal)
                 Fatal(messageProvider);
-            else if (level == LogLevel.Error)
+            else if (minimumLevel == LogLevel.Error)
                 Error(messageProvider);
-            else if (level == LogLevel.Warn)
+            else if (minimumLevel == LogLevel.Warn)
                 Warn(messageProvider);
-            else if (level == LogLevel.Info)
+            else if (minimumLevel == LogLevel.Info)
                 Info(messageProvider);
-            else if (level >= LogLevel.Debug)
+            else if (minimumLevel >= LogLevel.Debug)
                 Debug(messageProvider);
         }
 

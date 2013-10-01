@@ -14,6 +14,7 @@ namespace MassTransit.ElmahIntegration
 {
     using BusConfigurators;
     using Logging;
+    using MassTransit.Logging;
     using Util;
 
     /// <summary>
@@ -28,6 +29,16 @@ namespace MassTransit.ElmahIntegration
         public static void UseElmah([CanBeNull] this ServiceBusConfigurator configurator)
         {
             ElmahLogger.Use();
+        }
+
+        /// <summary>
+        /// Specify that you want to use the Elmah logging framework with MassTransit.
+        /// </summary>
+        /// <param name="configurator">Optional service bus configurator</param>
+        /// <param name="minimumLevel">Logging minimumLevel desired</param>
+        public static void UseElmah([CanBeNull] this ServiceBusConfigurator configurator, [NotNull] LogLevel minimumLevel)
+        {
+            Logger.UseLogger(new ElmahLogger(minimumLevel));
         }
     }
 }

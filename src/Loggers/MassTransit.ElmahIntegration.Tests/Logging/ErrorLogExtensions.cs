@@ -12,16 +12,34 @@
 // specific language governing permissions and limitations under the License.
 namespace MassTransit.ElmahIntegration.Tests.Logging
 {
+    using System;
     using System.Collections.Generic;
     using Elmah;
 
     public static class ErrorLogExtensions
     {
+        const string BlankError = "_blank";
+
         public static Error GetFirstError(this ErrorLog errorLog)
         {
             var page = new List<ErrorLogEntry>();
-            errorLog.GetErrors(0, int.MaxValue, page);
-            return page[0].Error;
+
+            try
+            {
+                errorLog.GetErrors(0, 1, page);
+                var error = page[0].Error;
+                return error.Message == BlankError ? null : error;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
+        public static void Clear(this ErrorLog errorLog)
+        {
+            var error = new Error { Message = BlankError };
+            errorLog.Log(error);
         }
     }
 }

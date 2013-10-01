@@ -25,9 +25,9 @@ namespace MassTransit.Logging
         bool IsErrorEnabled { get; }
         bool IsFatalEnabled { get; }
 
-        void Log(LogLevel level, object obj);
-        void Log(LogLevel level, object obj, Exception exception);
-        void Log(LogLevel level, LogOutputProvider messageProvider);
+        void Log(LogLevel minimumLevel, object obj);
+        void Log(LogLevel minimumLevel, object obj, Exception exception);
+        void Log(LogLevel minimumLevel, LogOutputProvider messageProvider);
         void LogFormat(LogLevel level, IFormatProvider formatProvider, string format, params object[] args);
         void LogFormat(LogLevel level, string format, params object[] args);
 

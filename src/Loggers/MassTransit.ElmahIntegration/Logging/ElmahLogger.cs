@@ -14,13 +14,25 @@ namespace MassTransit.ElmahIntegration.Logging
 {
     using Elmah;
     using MassTransit.Logging;
+    using Util;
 
     public class ElmahLogger :
         ILogger
     {
+        readonly LogLevel _minimumLevel;
+
+        public ElmahLogger([NotNull] LogLevel minimumLevel)
+        {
+            _minimumLevel = minimumLevel;
+        }
+
+        public ElmahLogger()
+            : this(LogLevel.All)
+        {}
+
         public ILog Get(string name)
         {
-            return new ElmahLog(ErrorLog.GetDefault(null));
+            return new ElmahLog(ErrorLog.GetDefault(null), _minimumLevel);
         }
 
         public static void Use()

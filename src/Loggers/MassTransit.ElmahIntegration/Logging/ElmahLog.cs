@@ -21,17 +21,24 @@ namespace MassTransit.ElmahIntegration.Logging
         ILog
     {
         readonly ErrorLog _errorLog;
+        readonly LogLevel _level;
         public static readonly IFormatProvider DefaultFormatProvider = CultureInfo.InvariantCulture;
 
-        public ElmahLog(ErrorLog errorLog)
+        public ElmahLog(ErrorLog errorLog, LogLevel level)
         {
             _errorLog = errorLog;
+            _level = level;
 
-            IsDebugEnabled = true;
-            IsInfoEnabled = true;
-            IsWarnEnabled = true;
-            IsErrorEnabled = true;
-            IsFatalEnabled = true;
+            IsDebugEnabled = IsEnabled(LogLevel.Debug);
+            IsInfoEnabled = IsEnabled(LogLevel.Info);
+            IsWarnEnabled = IsEnabled(LogLevel.Warn);
+            IsErrorEnabled = IsEnabled(LogLevel.Error);
+            IsFatalEnabled = IsEnabled(LogLevel.Fatal);
+        }
+
+        private bool IsEnabled(LogLevel level)
+        {
+            return level <= _level;
         }
 
         public bool IsDebugEnabled { get; private set; }
@@ -40,31 +47,34 @@ namespace MassTransit.ElmahIntegration.Logging
         public bool IsErrorEnabled { get; private set; }
         public bool IsFatalEnabled { get; private set; }
         
-        public void Log(LogLevel level, object obj)
+        public void Log(LogLevel minimumLevel, object obj)
         {
-            Log(level, obj, null);
+            Log(minimumLevel, obj, null);
         }
 
-        public void Log(LogLevel level, object message, Exception exception)
+        public void Log(LogLevel minimumLevel, object message, Exception exception)
         {
-            var error = exception == null ? new Error() : new Error(exception);
-            error.Message = message == null ? null : message.ToString();
-            error.Type = level.ToString();
-            error.Time = DateTime.Now;
+            if (IsEnabled(minimumLevel))
+            {
+                var error = exception == null ? new Error() : new Error(exception);
+                error.Message = message == null ? null : message.ToString();
+                error.Type = minimumLevel.ToString();
+                error.Time = DateTime.Now;
 
-            try
-            {
-                _errorLog.Log(error);
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.Print("Error: {0}\n{1}", ex.Message, ex.StackTrace);
+                try
+                {
+                    _errorLog.Log(error);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.Print("Error: {0}\n{1}", ex.Message, ex.StackTrace);
+                }
             }
         }
 
-        public void Log(LogLevel level, LogOutputProvider messageProvider)
+        public void Log(LogLevel minimumLevel, LogOutputProvider messageProvider)
         {
-            Log(level, messageProvider(), null);
+            Log(minimumLevel, messageProvider(), null);
         }
 
         public void LogFormat(LogLevel level, IFormatProvider formatProvider, string format, params object[] args)

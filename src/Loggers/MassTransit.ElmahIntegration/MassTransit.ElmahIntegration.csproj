@@ -34,7 +34,8 @@
     <DocumentationFile>bin\Release\MassTransit.ElmahIntegration.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Elmah">
+    <Reference Include="Elmah, Version=1.2.14706.0, Culture=neutral, PublicKeyToken=fec5b78991066236, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\lib\Elmah\Elmah.dll</HintPath>
     </Reference>
     <Reference Include="System" />
